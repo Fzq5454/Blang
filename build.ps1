@@ -116,4 +116,4 @@ Remove-Item $scratch -Recurse -Force
 
 Write-Host ""
 Write-Host "build complete: bootstrap\bin holds blang.exe, gn.exe and cmp.exe"
-Write-Host "try it:  bootstrap\bin\blang.exe -o hello.exe hello.b   then   hello.exe"
+Write-Host "try it:  bootstrap\bin\blang.exe -o demo.exe hello.b   then   demo.exe"

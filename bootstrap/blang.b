@@ -22,7 +22,7 @@
  ~        -P bootstrap/frontend -system kernel32 -dbrtm -dbfile
  ~  Run:
  ~    bootstrap/bin/blang.exe -h
- ~    bootstrap/bin/blang.exe bootstrap/hello.i
+ ~    bootstrap/bin/blang.exe -o demo.exe hello.b
  ~!
 
 !!! The release this driver prints with `--version`: the number, the day it was

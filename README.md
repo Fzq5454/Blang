@@ -45,8 +45,8 @@ toolchain, no assembler, no linker.
 
 ## Using it
 
-The repository ships `hello.b`: a structure with a field, a constructor, a
-destructor and a method.
+Write a program — a structure with a field, a constructor, a destructor and a
+method — and save it as `hello.b`:
 
 ```blang
 #head "stdsrt"
@@ -117,12 +117,10 @@ Linking and placement are chosen with `-link <dll>` (a b DLL), `-system <dll>`
 `#head`, `#import` and `#to` — `#to type=dll` builds a DLL instead of an
 executable.
 
-`examples/` holds small programs to try: `struct_method.b` (a struct with an
-out-of-line method), `operator_example.b`, `long_example.b`, `pkg.b` (packages),
-`win.b` and `msg.b` (window programs), and others. Two of them name no system DLL
-of their own, so they are built with the DLLs they call: `msg.b` with
-`-system kernel32 -system user32 -system gdi32`, `writefile_example.b` with
-`-system kernel32`.
+Two of the shapes worth trying on your own program: a structure with an
+out-of-line method (`stub` plus `void Person::birth { ... }`), and a window
+program, which is built with the DLLs it calls
+(`-system kernel32 -system user32 -system gdi32`).
 
 ## Repository layout
 
@@ -137,7 +135,6 @@ of their own, so they are built with the DLLs they call: `msg.b` with
 | `native/` | one signature file per Windows system DLL (`stub` declarations, no code) |
 | `lib/` | the import libraries a program links with `-l<name>` (`brtm`, `bprintf`, `bfile`, `bmath`, `bwin`) |
 | `ppinc/` | preprocessor include fragments |
-| `examples/` | small b programs: language features, packages, windows |
 | `source_code/self/` | a byte-for-byte reading copy of the compiler's sources; see `source_code/README.md` |
 | `tests/` | the PowerShell test suites |
 | `vsex/blang/` | the VS Code extension for `.b` files (sources; pack it with `vsce package`) |
