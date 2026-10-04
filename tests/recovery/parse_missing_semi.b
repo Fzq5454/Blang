@@ -1,0 +1,6 @@
+!!! A declaration that runs into the next one with no `;` between them.
+int main {
+    int a = 1
+    int b = 2;
+    return 0;
+}

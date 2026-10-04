@@ -1,0 +1,241 @@
+!~
+ ~  includes/bl/vector: a growable array, one instantiation per element type.
+ ~
+ ~  Why a library type instead of `T a[N]`: a fixed array needs its length at
+ ~  compile time and keeps it forever. `vector` keeps the elements in a block from
+ ~  the heap, holds the number used and the number reserved as runtime ints, and
+ ~  doubles the block when it runs out. Nothing about it is decided until the
+ ~  program asks, so one file serves `vector(int)`, `vector(str)`, `vector(Token)`
+ ~  and every struct of the program.
+ ~
+ ~      #head "vector"
+ ~
+ ~      vector(int) v;
+ ~      v.reserve(16);          ! optional: the first add() reserves on its own
+ ~      v.add(7);
+ ~      v.put(0, 9);            ! v[0] = 9, the write form
+ ~      int x = v.get(0);       ! v[0], the read form
+ ~      v[0] = 11;              ! the operators do the same thing
+ ~      int n = v.len;          ! how many elements are in it
+ ~
+ ~  Elements are copied in and out of the block, so T is a value type: an `int`, a
+ ~  `str`, a struct. Reading an element through `get` answers a copy; `at(i)`
+ ~  answers the address of the element itself, which is what a struct of the
+ ~  program is changed through:
+ ~
+ ~      @Token t = v.at(0);
+ ~      t.column = 3;
+ ~
+ ~  The object owns its block. Copying the `vector` value copies the three fields,
+ ~  which means both copies name the same elements - it is a handle, not a
+ ~  container that clones itself - so a second owner is made with `copy()` and the
+ ~  block is handed back with `release()` when the last owner is done with it.
+ ~  There is no destructor on purpose: a value returned from a function would be a
+ ~  second owner of the same block, and freeing it there would leave the caller
+ ~  with a released one.
+ ~!
+
+#once
+
+introduce TYPENAME T {
+    type vector {
+        !!! The block, how many elements are used, how many it can hold. A fresh
+        !!! value has no block at all, which is what `cap == 0` says: the first
+        !!! reservation is what creates it.
+        @T data;
+        int len;
+        int cap;
+
+        !!! Bytes one element takes. `T proto;` is declared to ask `size` about it:
+        !!! the layout of a struct is its fields back to back, and a block of the
+        !!! elements is stepped by exactly this number.
+        int elem_size {
+            T proto;
+            return size proto;
+        }
+
+        !!! Make room for `n` elements and copy the ones in use into the new block.
+        !!! The block always holds at least one element, so a vector that is added to
+        !!! once never asks the heap for nothing.
+        void reserve -> int n {
+            if n <= cap {
+                end;
+            }
+            int want = n;
+            if want < 1 {
+                want = 1;
+            }
+            int es = elem_size();
+            @T fresh;
+            malloc(@fresh, want * es);
+            !!! The block in use is taken into a local pointer first: an element of a
+            !!! field is reached through `this` here, which is what the element
+            !!! address needs, and a local keeps it the same shape everywhere.
+            @T src = data;
+            int i = 0;
+            while i < len {
+                fresh[i] = src[i];
+                i = i + 1;
+            }
+            if cap > 0 {
+                @T old = data;
+                unlink(@old);
+            }
+            data = fresh;
+            cap = want;
+        }
+
+        !!! Append one element, growing the block when it is full. The capacity
+        !!! doubles, so a run of adds costs one copy per element on average.
+        void add -> T v {
+            if len >= cap {
+                reserve(cap * 2 + 1);
+            }
+            data[len] = v;
+            len = len + 1;
+        }
+
+        !!! Take the last element out and answer it. Reading an empty vector is not
+        !!! something the type can answer, so it answers a zero element instead of
+        !!! reading outside the block.
+        T pop {
+            if len <= 0 {
+                T none;
+                return none;
+            }
+            len = len - 1;
+            @T e = @data[len];
+            return $e;
+        }
+
+        !!! The address of element `i`: what a struct element is changed through.
+        !!! `at` trusts its caller to pass an index below `len`.
+        @T at -> int i {
+            return @data[i];
+        }
+
+        !!! A copy of element `i`.
+        T get -> int i {
+            @T e = @data[i];
+            return $e;
+        }
+
+        !!! Put `v` at element `i`, which has to be one of the elements in use.
+        void put -> int i, T v {
+            data[i] = v;
+        }
+
+        !!! The read form: `v[i]`.
+        T operator [] -> int i {
+            @T e = @data[i];
+            return $e;
+        }
+
+        !!! The write form: `v[i] = x`.
+        void operator []= -> int i, T v {
+            data[i] = v;
+        }
+
+        !!! Make room and put `v` at `i`, moving the elements from `i` on up. The
+        !!! element is appended first (which is what makes room), the ones above `i`
+        !!! are moved up one place, and only then is `v` written where it belongs -
+        !!! writing it before the shift would have moved it up with the rest.
+        void insertAt -> int i, T v {
+            add(v);
+            int k = len - 1;
+            while k > i {
+                data[k] = data[k - 1];
+                k = k - 1;
+            }
+            data[i] = v;
+        }
+
+        !!! Take element `i` out and close the gap.
+        void removeAt -> int i {
+            int k = i;
+            while k + 1 < len {
+                data[k] = data[k + 1];
+                k = k + 1;
+            }
+            if len > 0 {
+                len = len - 1;
+            }
+        }
+
+        !!! Drop every element. The block stays, so the vector can be filled again
+        !!! without asking the heap a second time.
+        void clear {
+            len = 0;
+        }
+
+        !!! Write `v` into every element in use.
+        void fill -> T v {
+            int i = 0;
+            while i < len {
+                data[i] = v;
+                i = i + 1;
+            }
+        }
+
+        !!! The index of the first element equal to `v`, or -1. Two elements are equal
+        !!! when their bytes are, which is why one method serves every element type: T
+        !!! is never asked for `==`, and a struct of the program has none. The bytes are
+        !!! compared by the kernel, on the address of the element and of the argument,
+        !!! so no element is copied to be compared and no byte loop is needed.
+        int indexOf -> T v {
+            if len <= 0 {
+                return -1;
+            }
+            @T pv = @v;
+            @void rawv = (@void)pv;
+            utype longlong es = (longlong)elem_size();
+            int i = 0;
+            while i < len {
+                @T e = @data[i];
+                @void rawe = (@void)e;
+                if RtlCompareMemory(rawe, rawv, es) == es {
+                    return i;
+                }
+                i = i + 1;
+            }
+            return -1;
+        }
+
+        !!! A second vector with its own block and the same elements. Both blocks are
+        !!! reached through local pointers, because an element of a pointer field of a
+        !!! local struct (`c.data[i]`) is not a form the language reaches yet; taking
+        !!! the field into a local first is the same block.
+        vector copy {
+            vector c;
+            if len > 0 {
+                c.reserve(len);
+                @T src = data;
+                @T dst = c.data;
+                int i = 0;
+                while i < len {
+                    dst[i] = src[i];
+                    i = i + 1;
+                }
+                c.len = len;
+            }
+            return c;
+        }
+
+        !!! Give the block back and become empty. Every element is dropped, and the
+        !!! vector can be filled again from nothing.
+        void release {
+            if cap > 0 {
+                @T old = data;
+                unlink(@old);
+            }
+            data = null;
+            len = 0;
+            cap = 0;
+        }
+
+        !!! The constructor with a capacity: `vector(int) v = vector(16);`.
+        init NewVector -> int n {
+            reserve(n);
+        }
+    };
+}

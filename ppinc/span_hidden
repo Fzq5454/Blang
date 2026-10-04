@@ -1,0 +1,11 @@
+!~
+ ~  ppinc/span_hidden: closes an #if from the includer while that branch is not taken.
+ ~
+ ~  Everything in this file, and everything after the #head that pulled it in, is
+ ~  skipped - but the #endif still has to be read, or the stack would never come
+ ~  back. See _pps2.b.
+ ~!
+int hidden_from_branch {
+    return 1;
+}
+#endif

@@ -1,0 +1,10 @@
+!~
+ ~  ppinc/span_open: opens an #if that the file including it closes.
+ ~
+ ~  The condition stack belongs to the compile, so this is legal: the #endif that
+ ~  ends the branch is written in the includer (see _pps.b).
+ ~!
+#if built_in(ARCH_X64)
+int spanned_func {
+    return 6;
+}

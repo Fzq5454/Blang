@@ -1,0 +1,31 @@
+!~
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ ~  achive file (program type)
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~!
+
+!!! IMPORTANT: this file was DEPRECATED, and will be set-well in the future.
+
+#once
+
+#warning this file was DEPRECATED, please rm this head (for compatibility)
+
+!!! export __type {
+!!!     function void main {
+!!!         #to type=console
+!!!     },
+!!!     function void DllMain {
+!!!         #to type=dll
+!!!     },
+!!!     function void WinMain {
+!!!         #to type=win
+!!!     }
+!!! };
+
+!!! stub __type_sys__ __type;
+
+!!! use __type_sys__ {
+!!!     #import [*__main_code__]
+!!! };
+
+!!! #export *__main_code__

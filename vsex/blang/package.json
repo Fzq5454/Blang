@@ -1,0 +1,40 @@
+{
+  "name": "blang-language-support",
+  "displayName": "BLANG Language Support",
+  "description": "Basic language support for BLANG",
+  "version": "1.0.0",
+  "icon": "./icon/blang.png",
+  "publisher": "FZQ",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "blang",
+        "aliases": [
+          "BLANG",
+          "blang"
+        ],
+        "extensions": [
+          ".b"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icon/blang.png",
+          "dark": "./icon/blang.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "blang",
+        "scopeName": "source.blang",
+        "path": "./syntaxes/blang.tmLanguage.json"
+      }
+    ]
+  }
+}

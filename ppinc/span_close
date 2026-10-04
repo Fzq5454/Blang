@@ -1,0 +1,10 @@
+!~
+ ~  ppinc/span_close: closes an #if that was opened in the file including it.
+ ~
+ ~  The other direction of the same rule (see _pps.b): the #if is written in the
+ ~  includer, the #endif here.
+ ~!
+int from_span {
+    return 3;
+}
+#endif

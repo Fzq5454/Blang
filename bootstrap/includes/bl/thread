@@ -1,0 +1,28 @@
+!~
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ ~  achive file (thread)
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~!
+
+#once
+
+#warning this file is not finished yet, but it is already usable. It will be finished in the future.
+
+!!! BLANG_API bool createThread -> @void addr, @func f {
+!!!     __badd(addr);
+!!!     __badd(f);
+!!!     __bcall("_createThread");
+!!!     __bfree();
+!!! }
+
+!!! BLANG_API bool threadSleep -> int ms {
+!!!     __badd(ms);
+!!!     __bcall("_threadSleep");
+!!!     __bfree();
+!!! }
+
+!!! BLANG_API bool waitThreadReturn -> @void addr {
+!!!     __badd(addr);
+!!!     __bcall("_waitThreadReturn");
+!!!     __bfree();
+!!! }

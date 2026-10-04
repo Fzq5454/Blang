@@ -1,0 +1,451 @@
+!~
+ ~  blang standard library
+ ~  includes/bl/long: signed 64-bit integer, written the way an integer type is
+ ~  operations and the conversions, plus the method forms underneath them.
+ ~
+ ~  usage (C++-like):
+ ~      #head "long"
+ ~      long a = 2000000000;            !!! the converting constructor
+ ~      long big = 6000000000;          !!! wider than an int, split in two
+ ~      long c = a * 3;                 !!! 6000000000
+ ~      long d = a + 5;                 !!! an int operand builds itself
+ ~      if c % 3 == 0 { ... }
+ ~      if d > a { ... }
+ ~      (str)c                          !!! "6000000000"
+ ~
+ ~  A long is an ordinary struct of four ints: _lo holds bits 0..31, _hi holds
+ ~  bits 32..63 in two's complement, and _rem_lo/_rem_hi hold the remainder of
+ ~  the last division. Every field and helper this file declares starts with an
+ ~  underscore, so nothing here can collide with a name of the including program.
+ ~
+ ~  The constructors below are what make a long behave like a value: `long x = 5;`,
+ ~  `x = 5;`, `x + 5` and a `long` parameter called with `5` all build the long
+ ~  themselves, so none of the operators needs a second version for an int operand.
+ ~  A constant wider than an int has no single int parameter to go into, so it is
+ ~  split over the two halves of the second constructor. Conversions the other way
+ ~  are implicit through the operators: `(int)x`, `(str)x`, `(float)x`, `(bool)x`.
+ ~!
+
+#once
+
+type long {
+    int _lo;
+    int _hi;
+    int _rem_lo;
+    int _rem_hi;
+
+    !!! Construction from an int, and from a pair of 32-bit halves:
+    !!! `long x = 5;` / `x = 5;` / `x + 5` use the first one. A constant wider than
+    !!! an int has no single int parameter to go into, so it is split over the two
+    !!! halves of the second one, low bits first: `long x = 6000000000;`.
+    init long -> int v {
+        from(v);
+    }
+    init long -> int lo, int hi {
+        set(lo, hi);
+    }
+
+    !!! ---- operators (C++ style) ----
+    !!! Each one delegates to the method of the same name below. An `int` operand
+    !!! needs no version of its own: the constructor above builds the long.
+
+    long operator + -> long b { return add(b); }
+    long operator - -> long b { return sub(b); }
+    long operator * -> long b { return mul(b); }
+    long operator / -> long b { return div(b); }
+    long operator % -> long b { return mod(b); }
+
+    !!! Unary minus and bitwise not.
+    long operator - { return neg(); }
+    long operator ~ { long r; r._lo = ~_lo; r._hi = ~_hi; return r; }
+
+    long operator << -> int n { return shl(n); }
+    long operator >> -> int n { return shr(n); }
+
+    long operator & -> long b { long r; r._lo = _lo & b.low(); r._hi = _hi & b.high(); return r; }
+    long operator | -> long b { long r; r._lo = _lo | b.low(); r._hi = _hi | b.high(); return r; }
+    long operator ^ -> long b { long r; r._lo = _lo ^ b.low(); r._hi = _hi ^ b.high(); return r; }
+
+    !!! Comparisons return `int`, as in the rest of the language: 1 = true.
+    int operator == -> long b { return eq(b); }
+    int operator != -> long b { return ne(b); }
+    int operator < -> long b { return lt(b); }
+    int operator > -> long b { return gt(b); }
+    int operator <= -> long b { return le(b); }
+    int operator >= -> long b { return ge(b); }
+
+    !!! ---- conversions ----
+    !!! `(int)x` truncates to the low 32 bits, `(float)x` is the nearest double,
+    !!! `(bool)x` is "not zero", `(str)x` is the decimal form.
+    int operator int { return _lo; }
+    bool operator bool { int z = isZero(); if z == 1 { return false; } return true; }
+    str operator str { return toStr(); }
+    float operator float {
+        float f = (float)_lo;                   !!! the low half is unsigned
+        if _lo < 0 { f = f + 4294967296.0; }
+        float h = (float)_hi;
+        return f + h * 4294967296.0;
+    }
+
+    !!! ---- construction methods ----
+    !!! Build from two 32-bit halves.
+    void set -> int l, int h {
+        _lo = l;
+        _hi = h;
+    }
+
+    !!! Build from one 32-bit value, sign-extended to 64 bits.
+    void from -> int v {
+        _lo = v;
+        _hi = 0;
+        if v < 0 { _hi = -1; }
+    }
+
+    void clear {
+        _lo = 0;
+        _hi = 0;
+        _rem_lo = 0;
+        _rem_hi = 0;
+    }
+
+    !!! Copy another value into this one.
+    void copy -> long v {
+        _lo = v.low();
+        _hi = v.high();
+    }
+
+    !!! ---- inspection ----
+    int low  { return _lo; }
+    int high { return _hi; }
+    int remLow  { return _rem_lo; }
+    int remHigh { return _rem_hi; }
+
+    int isNeg {
+        int r = 0;
+        if _hi < 0 { r = 1; }
+        return r;
+    }
+
+    int isZero {
+        int r = 0;
+        if _hi == 0 {
+            if _lo == 0 { r = 1; }
+        }
+        return r;
+    }
+
+    !!! ---- internal helpers ----
+    !!! Carry out of a 32-bit addition: the expression is the carry out of the
+    !!! sign bit, so a negative result means a carry of one.
+    int _ucarry -> int a, int b {
+        int s = a + b;
+        int c = 0;
+        if ((a & b) | ((a | b) & ~s)) < 0 { c = 1; }
+        return c;
+    }
+
+    !!! Unsigned "a > b": equal sign bits compare like signed values, and a
+    !!! negative left operand is the larger one once the sign bit is set.
+    int _ugt -> int a, int b {
+        int r = 0;
+        if a < 0 {
+            if b >= 0 { r = 1; }
+            else { if a > b { r = 1; } }
+        } else {
+            if b >= 0 { if a > b { r = 1; } }
+        }
+        return r;
+    }
+
+    !!! this <<= 1
+    void _shl1 {
+        int c = 0;
+        if _lo < 0 { c = 1; }
+        _hi = (_hi << 1) | c;
+        _lo = _lo << 1;
+    }
+
+    !!! this >>= 1, logical: the sign bit of _hi must not be copied down.
+    void _shr1 {
+        int c = _hi & 1;
+        _hi = (_hi >> 1) & 2147483647;
+        _lo = ((_lo >> 1) & 2147483647) | (c << 31);
+    }
+
+    !!! Unsigned "this >= b"
+    int _uge -> long b {
+        int r = 0;
+        if _hi == b.high() {
+            if _lo == b.low() { r = 1; }
+            else { if _ugt(b.low(), _lo) == 0 { r = 1; } }
+        } else {
+            if _ugt(_hi, b.high()) == 1 { r = 1; }
+        }
+        return r;
+    }
+
+    !!! Unsigned divide: this = this / b, remainder left in _rem_lo/_rem_hi.
+    !!! Shift and subtract, one bit of the quotient per round.
+    void _udiv -> long b {
+        long q;
+        q.set(0, 0);
+        long r;
+        r.set(0, 0);
+        int i = 63;
+        while i >= 0 {
+            r._shl1();
+            int bit = 0;
+            if i >= 32 { bit = (_hi >> (i - 32)) & 1; }
+            else { bit = (_lo >> i) & 1; }
+            r._lo = r.low() | bit;
+            if r._uge(b) == 1 {
+                long t;
+                t = r.sub(b);
+                r = t;
+                if i >= 32 { q._hi = q.high() | (1 << (i - 32)); }
+                else { q._lo = q.low() | (1 << i); }
+            }
+            i = i - 1;
+        }
+        _rem_lo = r.low();
+        _rem_hi = r.high();
+        _lo = q.low();
+        _hi = q.high();
+    }
+
+    !!! ---- arithmetic (each returns a new value) ----
+    long add -> long b {
+        long r;
+        int c = _ucarry(_lo, b.low());
+        r._lo = _lo + b.low();
+        r._hi = _hi + b.high() + c;
+        return r;
+    }
+
+    long sub -> long b {
+        long nb;
+        nb._lo = ~b.low();
+        nb._hi = ~b.high();
+        long one;
+        one.set(1, 0);
+        long t;
+        t = nb.add(one);
+        return add(t);
+    }
+
+    !!! Shift and add multiply; the low 64 bits are the same for signed and
+    !!! unsigned operands.
+    long mul -> long b {
+        long acc;
+        acc.set(0, 0);
+        long m;
+        m.set(_lo, _hi);
+        long k;
+        k.set(b.low(), b.high());
+        int i = 0;
+        while i < 64 {
+            int bit = k.low() & 1;
+            if bit == 1 {
+                long t;
+                t = acc.add(m);
+                acc = t;
+            }
+            m._shl1();
+            k._shr1();
+            i = i + 1;
+        }
+        return acc;
+    }
+
+    !!! Signed divide, truncating towards zero: returns this / b and leaves the
+    !!! remainder (with the sign of the dividend) in remLow()/remHigh().
+    long div -> long b {
+        int negx = 0;
+        int negy = 0;
+        long x;
+        x.set(_lo, _hi);
+        long y;
+        y.set(b.low(), b.high());
+        if x.isNeg() == 1 {
+            negx = 1;
+            x = x.neg();
+        }
+        if y.isNeg() == 1 {
+            negy = 1;
+            y = y.neg();
+        }
+        x._udiv(y);
+        long q;
+        q.set(x.low(), x.high());
+        long r;
+        r.set(x.remLow(), x.remHigh());
+        if negx != negy { q = q.neg(); }
+        if negx == 1 { r = r.neg(); }
+        _rem_lo = r.low();
+        _rem_hi = r.high();
+        return q;
+    }
+
+    !!! Signed remainder: returns this % b.
+    long mod -> long b {
+        long q;
+        q = div(b);
+        long r;
+        r.set(_rem_lo, _rem_hi);
+        return r;
+    }
+
+    long neg {
+        long z;
+        z.set(0, 0);
+        long t;
+        t.set(_lo, _hi);
+        return z.sub(t);
+    }
+
+    long abs {
+        long t;
+        t.set(_lo, _hi);
+        long r;
+        r.set(_lo, _hi);
+        if _hi < 0 { r = t.neg(); }
+        return r;
+    }
+
+    !!! this << n (n in 0..63)
+    long shl -> int n {
+        long r;
+        r.set(_lo, _hi);
+        int i = 0;
+        while i < n {
+            r._shl1();
+            i = i + 1;
+        }
+        return r;
+    }
+
+    !!! this >> n, logical (the result is an unsigned shift of the 64 bits).
+    long shr -> int n {
+        long r;
+        r.set(_lo, _hi);
+        int i = 0;
+        while i < n {
+            r._shr1();
+            i = i + 1;
+        }
+        return r;
+    }
+
+    !!! this ** e for e >= 0
+    long pow -> int e {
+        long base;
+        base.set(_lo, _hi);
+        long acc;
+        acc.set(1, 0);
+        int i = 0;
+        while i < e {
+            long t;
+            t = acc.mul(base);
+            acc = t;
+            i = i + 1;
+        }
+        return acc;
+    }
+
+    !!! ---- comparison (1 = true, 0 = false) ----
+    int eq -> long b {
+        int r = 0;
+        if _hi == b.high() {
+            if _lo == b.low() { r = 1; }
+        }
+        return r;
+    }
+
+    int ne -> long b {
+        int r = 1;
+        if _hi == b.high() {
+            if _lo == b.low() { r = 0; }
+        }
+        return r;
+    }
+
+    !!! Signed "this < b": the high halves decide unless they are equal, and the
+    !!! low halves are then compared as unsigned values.
+    int lt -> long b {
+        int r = 0;
+        if _hi < b.high() { r = 1; }
+        else {
+            if _hi == b.high() {
+                if _ugt(b.low(), _lo) == 1 { r = 1; }
+            }
+        }
+        return r;
+    }
+
+    int le -> long b {
+        long t;
+        t.set(_lo, _hi);
+        return 1 - b.lt(t);
+    }
+
+    int gt -> long b {
+        long t;
+        t.set(_lo, _hi);
+        return b.lt(t);
+    }
+
+    int ge -> long b {
+        long t;
+        t.set(_lo, _hi);
+        return 1 - t.lt(b);
+    }
+
+    !!! ---- output ----
+    !!! Decimal string. `(str)x` is blang's number-to-string conversion; it
+    !!! returns a pointer into one buffer that every later conversion reuses, so
+    !!! each digit is concatenated as soon as it is produced. `s + ds` allocates
+    !!! a fresh string, which is what keeps the earlier digits alive.
+    str toStr {
+        long v;
+        v.set(_lo, _hi);
+        int neg = 0;
+        if v.isNeg() == 1 {
+            neg = 1;
+            long t;
+            t = v.neg();
+            v = t;
+        }
+        long ten;
+        ten.from(10);
+        str s = "";
+        int more = 1;
+        while more == 1 {
+            v._udiv(ten);
+            int d = v.remLow();
+            str t2 = (str)d + s;
+            s = t2;
+            if v.high() == 0 {
+                if v.low() == 0 { more = 0; }
+            }
+        }
+        if neg == 1 {
+            str t3 = "-" + s;
+            s = t3;
+        }
+        return s;
+    }
+};
+
+!!! Explicit construction inside one expression, for a value whose type is not
+!!! `int` (a `char`, a `bool`): the constructor above already covers `int`.
+!!!     long total = _from(1000000) * _from(1000000);
+introduce TYPENAME T {
+    long _from -> T v {
+        long r;
+        r.set(v, 0);
+        if v < 0 { r.set(v, -1); }
+        return r;
+    }
+}
+
+attribute long: USED

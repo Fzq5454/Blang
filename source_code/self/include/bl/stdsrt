@@ -1,0 +1,100 @@
+!~
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ ~  achive file (core)
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~!
+
+#once
+
+BLANG_API int memory -> @void addr {
+	__badd(addr);
+	__bcall("_memory");
+	__bfree();
+}
+
+!!! version a
+
+BLANG_API bool malloc -> @void addr, int bytes {
+	__badd(addr);
+	__badd(bytes);
+	__bcall("_malloc");
+	__bfree();
+}
+
+BLANG_API void unlink -> @void addr {
+	__badd(addr);
+	__bcall("_unlink");
+	__bfree();
+}
+
+!!! version b
+
+BLANG_API bool mallocA -> @void addr, int bytes {
+	__badd(addr);
+	__badd(bytes);
+	__bcall("_mallocA");
+	__bfree();
+}
+
+BLANG_API void unlinkA -> @void addr {
+	__badd(addr);
+	__bcall("_unlinkA");
+	__bfree();
+}
+
+!!! end
+
+kind Encoding { 
+	CP1250, CP1251, CP1252, CP1253, CP1254, 
+	
+	CP1255, CP1256, CP1257, CP1258, CP936, CP949, CP950, 
+
+	CP932, CP874, CP20866, CP21866, CP437, CP737, CP775, CP850, 
+
+	CP852, CP855, CP857, CP858, CP860, CP861, CP862, CP863, CP864, CP865, CP866, CP869, 
+
+	UTF_8, UTF_16, UTF_16LE, UTF_16BE, UTF_32, UTF_32LE, UTF_32BE, UCS_2, 
+
+	ISO_8859_1, ISO_8859_2, ISO_8859_3, ISO_8859_4, ISO_8859_5, ISO_8859_6, ISO_8859_7, ISO_8859_8, ISO_8859_9,
+
+	ISO_8859_10, ISO_8859_11, ISO_8859_13, ISO_8859_14, ISO_8859_15, ISO_8859_16,
+
+	CP10000, CP10004, CP10006, CP10007, CP10010, CP10017, CP10029, CP10079, CP10081, CP10082, 
+
+	CP037, CP273, CP277, CP278, CP280, CP284, CP285, CP297, CP420, CP423, CP424, CP500, CP871, CP875, CP880, 
+
+	CP905, CP924, CP1026, CP1047, CP1140, CP1141, CP1142, CP1143, CP1144, CP1145, CP1146, CP1147, CP1148, CP1149
+}
+
+type system {
+    BLANG_API void out -> any s... {
+		__badd(s);
+		__bcall("_system_out");
+		__bfree();
+	}
+	BLANG_API void err -> any s... {
+		__badd(s);
+		__bcall("_system_err");
+		__bfree();
+	}
+	BLANG_API void std_out -> any s... {
+		__badd(s);
+		__bcall("_system_std_out");
+		__bfree();
+	}
+
+	BLANG_API str in -> str prt {
+		__badd(prt);
+		__bcall("_system_in");
+		__bfree();
+	}
+
+	BLANG_API void setEncoding -> Encoding encoding {
+		__badd(encoding);
+		__bcall("_system_set_encoding");
+		__bfree();
+	}
+};
+
+attribute system: USED
+rule warn(msg_en_zh(pair(not_pair(malloc, unlink), "warning", "malloc and free are not match", malloc, unlink), "malloc and unlink are not match", "malloc 和 unlink 调用不匹配"))

@@ -1,0 +1,6 @@
+# Every file is stored and checked out exactly as it is. The sources of this
+# project are read by a compiler that must produce the same bytes from the same
+# bytes, and git's line-ending conversion would rewrite them on checkout: a `.b`
+# file that came out of the repository as CRLF is not the file the release was
+# built from.
+* -text

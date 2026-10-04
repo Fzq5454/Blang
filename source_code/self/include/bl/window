@@ -1,0 +1,181 @@
+!~
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ ~  achive file (window)
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~!
+
+#once
+
+BLANG_API bool createWin -> @void win, int w, int h {
+	__badd(win);
+	__badd(w);
+	__badd(h);
+	__bcall("_createWin");
+	__bfree();
+}
+
+BLANG_API void showWin -> @void win {
+	__badd(win);
+	__bcall("_showWin");
+	__bfree();
+}
+
+BLANG_API void hideWin -> @void win {
+	__badd(win);
+	__bcall("_hideWin");
+	__bfree();
+}
+
+BLANG_API void closeWin -> @void win {
+	__badd(win);
+	__bcall("_closeWin");
+	__bfree();
+}
+
+BLANG_API void minWin -> @void win {
+	__badd(win);
+	__bcall("_minWin");
+	__bfree();
+}
+
+BLANG_API void maxWin -> @void win {
+	__badd(win);
+	__bcall("_maxWin");
+	__bfree();
+}
+
+BLANG_API void setWinTitle -> @void win, str title {
+	__badd(win);
+	__badd(title);
+	__bcall("_setWinTitle");
+	__bfree();
+}
+
+BLANG_API void setWinTitleA -> @void win, str title, Encoding encoding {
+	__badd(win);
+	__badd(title);
+	__badd(encoding);
+	__bcall("_setWinTitleA");
+	__bfree();
+}
+
+BLANG_API void setWinSize -> @void win, int w, int h {
+	__badd(win);
+	__badd(w);
+	__badd(h);
+	__bcall("_setWinSize");
+	__bfree();
+}
+
+BLANG_API void setWinPos -> @void win, int x, int y {
+	__badd(win);
+	__badd(x);
+	__badd(y);
+	__bcall("_setWinPos");
+	__bfree();
+}
+
+BLANG_API int getWinW -> @void win {
+	__badd(win);
+	__bcall("_getWinW");
+	__bfree();
+}
+
+BLANG_API int getWinH -> @void win {
+	__badd(win);
+	__bcall("_getWinH");
+	__bfree();
+}
+
+BLANG_API bool isWinOpen -> @void win {
+	__badd(win);
+	__bcall("_isWinOpen");
+	__bfree();
+}
+
+BLANG_API void nextMsgWin -> @void win {
+	__badd(win);
+	__bcall("_nextMsgWin");
+	__bfree();
+}
+
+BLANG_API void drawAgainWin -> @void win {
+	__badd(win);
+	__bcall("_drawAgainWin");
+	__bfree();
+}
+
+BLANG_API bool isWinNeedDraw -> @void win {
+	__badd(win);
+	__bcall("_isWinNeedDraw");
+	__bfree();
+}
+
+BLANG_API int getScreenW {
+	__bcall("_getScreenW");
+	__bfree();
+}
+
+BLANG_API int getScreenH {
+	__bcall("_getScreenH");
+	__bfree();
+}
+
+!!! The button list is not passed on: which buttons a box gets is decided by the
+!!! registry _regMsgBoxBtu fills, and the library never read these arguments. It
+!!! still declares `btu...` so a call site may list its handles, but passing them
+!!! through would only make the call arity depend on how many were written.
+!!!
+!!! The title, the text and the button labels are read as UTF-8, the encoding a .b
+!!! source is written in, and drawn through the wide interface; showMsgBoxA takes
+!!! the code page instead.
+BLANG_API bool showMsgBox -> @void win, str title, str content, @void btu... {
+	__badd(win);
+	__badd(title);
+	__badd(content);
+	__bcall("_showMsgBox");
+	__bfree();
+}
+
+!!! The same box with the code page the encoding value names, for text that is not
+!!! written in UTF-8.
+BLANG_API bool showMsgBoxA -> @void win, str title, str content, Encoding encoding, @void btu... {
+	__badd(win);
+	__badd(title);
+	__badd(content);
+	__badd(encoding);
+	__bcall("_showMsgBoxA");
+	__bfree();
+}
+
+BLANG_API void regMsgBoxBtu -> @void btu, str text, func fn {
+	__badd(btu);
+	__badd(text);
+	__badd(fn);
+	__bcall("_regMsgBoxBtu");
+	__bfree();
+}
+
+BLANG_API void setFontWin -> @void win, str font, int fontSize = 9, int quality = 1 {
+	__badd(win);
+	__badd(font);
+	__badd(fontSize);
+	__badd(quality);
+	__bcall("_setFontWin");
+	__bfree();
+}
+
+!!! The font of one button, or of every button when the variable holds null. `btu`
+!!! is the variable regMsgBoxBtu filled in, passed as `@btu`; a button window
+!!! handle in it works too and takes the font at once. fontSize is a point size;
+!!! quality: 1 keeps the system default, 2 antialiases, 3 uses ClearType, 4 or
+!!! more ClearType natural. A button that no call sets a font for uses the box's
+!!! own font, and the system's message font when setFontWin was never called.
+BLANG_API void setFontBtu -> @void btu, str font, int fontSize = 9, int quality = 1 {
+	__badd(btu);
+	__badd(font);
+	__badd(fontSize);
+	__badd(quality);
+	__bcall("_setFontBtu");
+	__bfree();
+}

@@ -1,0 +1,67 @@
+!~
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ ~  achive file (format func)
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~!
+
+#once
+
+BLANG_API void _printf_s -> str s {
+    __badd(s);
+    __bcall("_printf_s");
+    __bfree();
+}
+
+BLANG_API void _printf_d -> int n {
+    __badd(n);
+    __bcall("_printf_d");
+    __bfree();
+}
+
+BLANG_API void _printf_l -> longlong n {
+    __badd(n);
+    __bcall("_printf_l");
+    __bfree();
+}
+
+!!! The unsigned verbs: `%u` reads a 32-bit slot as unsigned, `%lu` / `%llu` a
+!!! 64-bit one, so the value of `-1` prints as 4294967295 or 18446744073709551615.
+BLANG_API void _printf_u -> int n {
+    __badd(n);
+    __bcall("_printf_u");
+    __bfree();
+}
+
+BLANG_API void _printf_ul -> longlong n {
+    __badd(n);
+    __bcall("_printf_ul");
+    __bfree();
+}
+
+BLANG_API void _printf_f -> float f, int prec {
+    __badd(f);
+    __badd(prec);
+    __bcall("_printf_f");
+    __bfree();
+}
+
+BLANG_API void _printf_c -> char c {
+    __badd(c);
+    __bcall("_printf_c");
+    __bfree();
+}
+
+BLANG_API void _printf_p -> @void p, int prec {
+    __badd(p);
+    __badd(prec);
+    __bcall("_printf_p");
+    __bfree();
+}
+
+__get_built_in_func<__get_format__> __get_format__;
+
+__get_built_in_func<__format_out__> __format_out__;
+
+__get_format__ printf -> str fmt, any rest... {
+    return __format_out__(__get_format__);
+}

@@ -1,0 +1,257 @@
+!~
+ ~  blang standard library
+ ~  includes/bl/exception: names for the codes a `try / exception` block catches.
+ ~
+ ~  usage:
+ ~      #head "exception"
+ ~
+ ~      try {
+ ~          int a = 1 / 0;
+ ~      } exception (e) {
+ ~          system.out(exceptionName(e));      !!! EXCEPTION_INT_DIVIDE_BY_ZERO
+ ~          system.out(e);                     !!! -1073741676 (0xC0000094)
+ ~      }
+ ~
+ ~  A program can also raise a code itself, with `throw`:
+ ~
+ ~      try {
+ ~          throw toException(EXCEPTION_STACK_OVERFLOW);
+ ~      } exception (e) {
+ ~          system.out(exceptionName(e));      !!! EXCEPTION_STACK_OVERFLOW
+ ~      }
+ ~
+ ~  `e` is the Windows exception code of the fault that ended the try body: a
+ ~  32-bit value, so a code with its top bit set reads back negative (0xC0000094 is
+ ~  -1073741676). The switch below is on an int, so the codes stay spelled the way
+ ~  they usually are - 0xC0000094 and -1073741676 are the same case.
+ ~
+ ~  The names are the ones winnt.h / minwinbase.h / ntstatus.h give the codes, and
+ ~  every code those headers define as an exception is here. The table is split
+ ~  into three parts:
+ ~      A  faults the cpu raises; these reach a try block
+ ~      B  codes Windows, its debugger support and other runtimes raise while the
+ ~         program runs; these reach a try block too
+ ~      C  codes a try block can never receive: fail fast exceptions bypass every
+ ~         handler except the debugger's, loader failures happen before the program
+ ~         starts, WOW64 codes belong to 32-bit processes, and the last two are
+ ~         process exit codes rather than exceptions
+ ~
+ ~  Anything else gives "unknown exception". No table can list every code: any
+ ~  code can be raised with RaiseException, and a library may use one of its own
+ ~  (Chromium raises 0xE0000008 for a failed allocation, Crashpad uses 0x0517C0ED).
+ ~  The value is still in `e` for those, and `printf("%p.8", e)` prints it the way
+ ~  Windows spell it - 0xC0000094.
+ ~!
+
+!!! The exception codes as an enum, so a program names the fault it raises instead
+!!! of writing the number out. Every member carries the Windows value, which is
+!!! what `throw`, `exception` and `exceptionName` all work with.
+
+#once
+
+kind ExceptionCode {
+	EXCEPTION_GUARD_PAGE = 0x80000001,
+	EXCEPTION_DATATYPE_MISALIGNMENT = 0x80000002,
+	EXCEPTION_BREAKPOINT = 0x80000003,
+	EXCEPTION_SINGLE_STEP = 0x80000004,
+	EXCEPTION_ACCESS_VIOLATION = 0xC0000005,
+	EXCEPTION_IN_PAGE_ERROR = 0xC0000006,
+	EXCEPTION_ILLEGAL_INSTRUCTION = 0xC000001D,
+	EXCEPTION_ARRAY_BOUNDS_EXCEEDED = 0xC000008C,
+	EXCEPTION_FLT_DENORMAL_OPERAND = 0xC000008D,
+	EXCEPTION_FLT_DIVIDE_BY_ZERO = 0xC000008E,
+	EXCEPTION_FLT_INEXACT_RESULT = 0xC000008F,
+	EXCEPTION_FLT_INVALID_OPERATION = 0xC0000090,
+	EXCEPTION_FLT_OVERFLOW = 0xC0000091,
+	EXCEPTION_FLT_STACK_CHECK = 0xC0000092,
+	EXCEPTION_FLT_UNDERFLOW = 0xC0000093,
+	EXCEPTION_INT_DIVIDE_BY_ZERO = 0xC0000094,
+	EXCEPTION_INT_OVERFLOW = 0xC0000095,
+	EXCEPTION_PRIV_INSTRUCTION = 0xC0000096,
+	EXCEPTION_STACK_OVERFLOW = 0xC00000FD,
+	STATUS_UNWIND = 0xC0000027,
+	STATUS_BAD_STACK = 0xC0000028,
+	STATUS_INVALID_UNWIND_TARGET = 0xC0000029,
+	EXCEPTION_INVALID_HANDLE = 0xC0000008,
+	EXCEPTION_NONCONTINUABLE_EXCEPTION = 0xC0000025,
+	EXCEPTION_INVALID_DISPOSITION = 0xC0000026,
+	EXCEPTION_POSSIBLE_DEADLOCK = 0xC0000194,
+	STATUS_LONGJUMP = 0x80000026,
+	STATUS_INVALID_PARAMETER = 0xC000000D,
+	STATUS_NO_MEMORY = 0xC0000017,
+	STATUS_BUFFER_TOO_SMALL = 0xC0000023,
+	STATUS_INSUFFICIENT_RESOURCES = 0xC000009A,
+	STATUS_ILLEGAL_FLOAT_CONTEXT = 0xC000014A,
+	STATUS_INVALID_CRUNTIME_PARAMETER = 0xC0000417,
+	STATUS_FATAL_USER_CALLBACK_EXCEPTION = 0xC000041D,
+	STATUS_ASSERTION_FAILURE = 0xC0000420,
+	STATUS_STOWED_EXCEPTION = 0xC000027B,
+	DBG_CONTROL_C = 0x40010005,
+	DBG_PRINTEXCEPTION_C = 0x40010006,
+	DBG_RIPEXCEPTION = 0x40010007,
+	DBG_CONTROL_BREAK = 0x40010008,
+	DBG_COMMAND_EXCEPTION = 0x40010009,
+	DBG_PRINTEXCEPTION_WIDE_C = 0x4001000A,
+	MS_VC_EXCEPTION = 0x406D1388,
+	CLR_EXCEPTION = 0xE0434352,
+	CPP_EH_EXCEPTION = 0xE06D7363,
+	STATUS_FATAL_APP_EXIT = 0x40000015,
+	STATUS_WX86_SINGLE_STEP = 0x4000001E,
+	STATUS_WX86_BREAKPOINT = 0x4000001F,
+	STATUS_DLL_NOT_FOUND = 0xC0000135,
+	STATUS_ENTRYPOINT_NOT_FOUND = 0xC0000139,
+	STATUS_CONTROL_C_EXIT = 0xC000013A,
+	STATUS_DLL_INIT_FAILED = 0xC0000142,
+	STATUS_HEAP_CORRUPTION = 0xC0000374,
+	STATUS_STACK_BUFFER_OVERRUN = 0xC0000409,
+	STATUS_FAIL_FAST_EXCEPTION = 0xC0000602
+};
+
+!!! The exception code of one of the codes above: what `throw` raises and what
+!!! `exception` hands to the handler. The enum members already hold the Windows
+!!! values, so this is the naming step - `toException(EXCEPTION_STACK_OVERFLOW)`
+!!! is 0xC00000FD - which keeps `throw` reading as "raise this error".
+int toException -> int code {
+	return code;
+}
+
+!!! The name of an exception code, or "unknown exception" when the table below
+!!! has no entry for it.
+str exceptionName -> int code {
+	!!! Narrow the code to 32 bits: the same code arrives negative from `e` and
+	!!! positive when it was written out as a literal, and an int holds one value
+	!!! for both.
+	int e = code;
+	switch (e) {
+
+		!!! ---- A: raised by the cpu ----
+
+		case 0x80000001:
+			return "EXCEPTION_GUARD_PAGE";
+		case 0x80000002:
+			return "EXCEPTION_DATATYPE_MISALIGNMENT";
+		case 0x80000003:
+			return "EXCEPTION_BREAKPOINT";
+		case 0x80000004:
+			return "EXCEPTION_SINGLE_STEP";
+		case 0xC0000005:
+			return "EXCEPTION_ACCESS_VIOLATION";
+		case 0xC0000006:
+			return "EXCEPTION_IN_PAGE_ERROR";
+		case 0xC000001D:
+			return "EXCEPTION_ILLEGAL_INSTRUCTION";
+		case 0xC000008C:
+			return "EXCEPTION_ARRAY_BOUNDS_EXCEEDED";
+		case 0xC000008D:
+			return "EXCEPTION_FLT_DENORMAL_OPERAND";
+		case 0xC000008E:
+			return "EXCEPTION_FLT_DIVIDE_BY_ZERO";
+		case 0xC000008F:
+			return "EXCEPTION_FLT_INEXACT_RESULT";
+		case 0xC0000090:
+			return "EXCEPTION_FLT_INVALID_OPERATION";
+		case 0xC0000091:
+			return "EXCEPTION_FLT_OVERFLOW";
+		case 0xC0000092:
+			return "EXCEPTION_FLT_STACK_CHECK";
+		case 0xC0000093:
+			return "EXCEPTION_FLT_UNDERFLOW";
+		case 0xC0000094:
+			return "EXCEPTION_INT_DIVIDE_BY_ZERO";
+		case 0xC0000095:
+			return "EXCEPTION_INT_OVERFLOW";
+		case 0xC0000096:
+			return "EXCEPTION_PRIV_INSTRUCTION";
+		case 0xC00000FD:
+			return "EXCEPTION_STACK_OVERFLOW";
+
+		!!! ---- B: raised by Windows while the program runs ----
+
+		!!! stack and unwinding
+		case 0xC0000027:
+			return "STATUS_UNWIND";
+		case 0xC0000028:
+			return "STATUS_BAD_STACK";
+		case 0xC0000029:
+			return "STATUS_INVALID_UNWIND_TARGET";
+		case 0xC0000008:
+			return "EXCEPTION_INVALID_HANDLE";
+		case 0xC0000025:
+			return "EXCEPTION_NONCONTINUABLE_EXCEPTION";
+		case 0xC0000026:
+			return "EXCEPTION_INVALID_DISPOSITION";
+		case 0xC0000194:
+			return "EXCEPTION_POSSIBLE_DEADLOCK";
+		case 0x80000026:
+			return "STATUS_LONGJUMP";
+
+		!!! memory and parameters
+		case 0xC000000D:
+			return "STATUS_INVALID_PARAMETER";
+		case 0xC0000017:
+			return "STATUS_NO_MEMORY";
+		case 0xC0000023:
+			return "STATUS_BUFFER_TOO_SMALL";
+		case 0xC000009A:
+			return "STATUS_INSUFFICIENT_RESOURCES";
+		case 0xC000014A:
+			return "STATUS_ILLEGAL_FLOAT_CONTEXT";
+		case 0xC0000417:
+			return "STATUS_INVALID_CRUNTIME_PARAMETER";
+		case 0xC000041D:
+			return "STATUS_FATAL_USER_CALLBACK_EXCEPTION";
+		case 0xC0000420:
+			return "STATUS_ASSERTION_FAILURE";
+		case 0xC000027B:
+			return "STATUS_STOWED_EXCEPTION";
+
+		!!! only while a debugger is attached
+		case 0x40010005:
+			return "DBG_CONTROL_C";
+		case 0x40010006:
+			return "DBG_PRINTEXCEPTION_C";
+		case 0x40010007:
+			return "DBG_RIPEXCEPTION";
+		case 0x40010008:
+			return "DBG_CONTROL_BREAK";
+		case 0x40010009:
+			return "DBG_COMMAND_EXCEPTION";
+		case 0x4001000A:
+			return "DBG_PRINTEXCEPTION_WIDE_C";
+		case 0x406D1388:
+			return "MS_VC_EXCEPTION";
+
+		!!! other runtimes
+		case 0xE0434352:
+			return "CLR_EXCEPTION";
+		case 0xE06D7363:
+			return "CPP_EH_EXCEPTION";
+
+		!!! ---- C: can never reach a try block ----
+
+		case 0x40000015:
+			return "STATUS_FATAL_APP_EXIT";
+		case 0x4000001E:
+			return "STATUS_WX86_SINGLE_STEP";
+		case 0x4000001F:
+			return "STATUS_WX86_BREAKPOINT";
+		case 0xC0000135:
+			return "STATUS_DLL_NOT_FOUND";
+		case 0xC0000139:
+			return "STATUS_ENTRYPOINT_NOT_FOUND";
+		case 0xC000013A:
+			return "STATUS_CONTROL_C_EXIT";
+		case 0xC0000142:
+			return "STATUS_DLL_INIT_FAILED";
+		case 0xC0000374:
+			return "STATUS_HEAP_CORRUPTION";
+		case 0xC0000409:
+			return "STATUS_STACK_BUFFER_OVERRUN";
+		case 0xC0000602:
+			return "STATUS_FAIL_FAST_EXCEPTION";
+
+		unmatch:
+			return "unknown exception";
+	}
+	return "unknown exception";
+}

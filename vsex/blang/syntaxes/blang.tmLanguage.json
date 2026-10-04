@@ -1,0 +1,265 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "BLANG",
+  "scopeName": "source.blang",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#preprocessor" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#packages" },
+    { "include": "#introduce" },
+    { "include": "#exceptions" },
+    { "include": "#function-definition" },
+    { "include": "#keywords" },
+    { "include": "#types" },
+    { "include": "#constants" },
+    { "include": "#builtins" },
+    { "include": "#function-call" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "packages": {
+      "patterns": [
+        {
+          "name": "meta.package.blang",
+          "match": "^[ \\t]*(package)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.blang" },
+            "2": { "name": "entity.name.namespace.blang" }
+          }
+        },
+        {
+          "name": "meta.import.blang",
+          "match": "^[ \\t]*(use)\\s+([a-zA-Z_][a-zA-Z0-9_]*)(::([a-zA-Z_][a-zA-Z0-9_]*))?",
+          "captures": {
+            "1": { "name": "keyword.control.blang" },
+            "2": { "name": "entity.name.namespace.blang" },
+            "4": { "name": "entity.name.function.blang" }
+          }
+        },
+        {
+          "name": "entity.name.namespace.blang",
+          "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*(?=::)"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        { "name": "comment.block.blang", "begin": "!~", "end": "~!" },
+        { "name": "comment.line.blang", "match": "!!!.*$" }
+      ]
+    },
+    "preprocessor": {
+      "name": "keyword.control.import.blang",
+      "match": "#[a-zA-Z_][a-zA-Z0-9_]*"
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.blang",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            { "name": "constant.character.escape.blang", "match": "\\\\." }
+          ]
+        },
+        {
+          "name": "string.quoted.single.blang",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            { "name": "constant.character.escape.blang", "match": "\\\\." }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        { "name": "constant.numeric.hex.blang", "match": "\\b0[xX][0-9a-fA-F]+\\b" },
+        { "name": "constant.numeric.float.blang", "match": "\\b(?:\\d+\\.\\d*|\\.\\d+)\\b" },
+        { "name": "constant.numeric.integer.blang", "match": "\\b\\d+\\b" }
+      ]
+    },
+    "introduce": {
+      "patterns": [
+        {
+          "name": "meta.function.blang",
+          "match": "^[ \\t]*(introduce)\\b\\s+(TYPENAME|TEMPLATE|ARGS)\\s+([A-Za-z][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.blang" },
+            "2": { "name": "entity.name.function.preprocessor" }
+          }
+        },
+        {
+          "name": "keyword.control.blang",
+          "match": "\\bintroduce\\b"
+        },
+        {
+          "name": "entity.name.function.preprocessor",
+          "match": "\\b(?:TYPENAME|TEMPLATE|ARGS)\\b"
+        }
+      ]
+    },
+    "exceptions": {
+      "patterns": [
+        {
+          "name": "meta.try.blang",
+          "match": "\\b(exception)\\s*(?:\\(\\s*([a-zA-Z_][a-zA-Z0-9_]*)?\\s*\\))?",
+          "captures": {
+            "1": { "name": "keyword.control.exception.blang" },
+            "2": { "name": "variable.parameter.blang" }
+          }
+        },
+        {
+          "name": "meta.try.blang",
+          "match": "\\b(try)\\b",
+          "captures": {
+            "1": { "name": "keyword.control.exception.blang" }
+          }
+        },
+        {
+          "name": "meta.throw.blang",
+          "match": "\\b(throw)\\b",
+          "captures": {
+            "1": { "name": "keyword.control.exception.blang" }
+          }
+        }
+      ]
+    },
+    "function-definition": {
+      "patterns": [
+        {
+          "name": "meta.function.blang",
+          "match": "^[ \\t]*(stub)\\s+((?:(?:const|static|utype)\\s+)*)(@?(?:func|int|longlong|str|float|bool|char|void|any|[A-Z][a-zA-Z0-9_]*))\\s+((?:[a-zA-Z_][a-zA-Z0-9_]*::)?[a-zA-Z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "storage.modifier.blang" },
+            "2": { "name": "storage.modifier.blang" },
+            "3": { "name": "storage.type.blang" },
+            "4": { "name": "entity.name.function.blang" }
+          }
+        },
+        {
+          "name": "meta.function.blang",
+          "match": "\\b(BLANG_API)\\s+((?:(?:const|static|utype)\\s+)*)(@?(?:func|int|longlong|str|float|bool|char|void|any))\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "storage.type.function.blang" },
+            "2": { "name": "storage.modifier.blang" },
+            "3": { "name": "storage.type.blang" },
+            "4": { "name": "entity.name.function.blang" }
+          }
+        },
+        {
+          "name": "meta.function.blang",
+          "match": "^[ \\t]*((?:(?:local|reload|stub)\\s+)*)?((?:(?:const|static|utype)\\s+)*)(@?(?:func|int|longlong|str|float|bool|char|void|any|[A-Z][a-zA-Z0-9_]*))\\s+((?:[a-zA-Z_][a-zA-Z0-9_]*::)?[a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\{|->)",
+          "captures": {
+            "1": { "name": "storage.modifier.blang" },
+            "2": { "name": "storage.modifier.blang" },
+            "3": { "name": "storage.type.blang" },
+            "4": { "name": "entity.name.function.blang" }
+          }
+        },
+        {
+          "name": "meta.function.operator.blang",
+          "match": "^[ \\t]*((?:(?:local|reload)\\s+)*)?((?:(?:const|static|utype)\\s+)*)(@?(?:func|int|longlong|str|float|bool|char|void|any|[A-Z][a-zA-Z0-9_]*))\\s+(operator)\\s+(\\[\\]|[^\\s]+)",
+          "captures": {
+            "1": { "name": "storage.modifier.blang" },
+            "2": { "name": "storage.modifier.blang" },
+            "3": { "name": "storage.type.blang" },
+            "4": { "name": "storage.type.function.operator.blang" },
+            "5": { "name": "entity.name.function.operator.blang" }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.blang",
+          "match": "\\b(?:if|else|elif|while|do|continue|skip|switch|case|unmatch|return|end|back)\\b"
+        },
+        {
+          "name": "keyword.control.blang",
+          "match": "\\b(?:introduce|type|kind|init|destruct|package|use|rcode)\\b"
+        },
+        {
+          "name": "keyword.other.blang",
+          "match": "\\b(?:size|count|operator|etc)\\b"
+        },
+        {
+          "name": "storage.modifier.blang",
+          "match": "\\b(?:local|ref|reload|stub|const|static|utype|public|private|protected)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "meta.type.blang",
+          "match": "^[ \\t]*(type)\\s+([A-Za-z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.blang" },
+            "2": { "name": "entity.name.type.blang" }
+          }
+        },
+        {
+          "name": "meta.enum.blang",
+          "match": "^[ \\t]*(kind)\\s+([A-Za-z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.blang" },
+            "2": { "name": "entity.name.type.blang" }
+          }
+        },
+        {
+          "name": "storage.type.blang",
+          "match": "@(?:int|longlong|float|char|str|void|bool|func)\\b"
+        },
+        {
+          "name": "storage.type.blang",
+          "match": "\\b(?:int|longlong|str|float|bool|char|void|any|func)\\b"
+        },
+        {
+          "name": "storage.type.blang",
+          "match": "\\b[A-Z][a-zA-Z0-9_]*(?=\\s+[a-z_])"
+        },
+        {
+          "name": "storage.type.blang",
+          "match": "\\b[A-Z][a-zA-Z0-9_]*(?=\\s*\\()"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        { "name": "constant.language.blang", "match": "\\b(?:true|false|null)\\b" },
+        {
+          "name": "constant.other.blang",
+          "match": "\\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\\b"
+        }
+      ]
+    },
+    "builtins": {
+      "name": "support.function.blang",
+      "match": "\\b(?:__badd|__bcall|__bfree|__get_built_in_func|__get_format__|__format_out__)\\b"
+    },
+    "function-call": {
+      "name": "entity.name.function.blang",
+      "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\()"
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "invalid.illegal.operator.blang",
+          "match": "(?:[+\\-*/%&|^]=|<<=|>>=|=[+\\-*%&|^]|=[/](?![*/]))"
+        },
+        {
+          "name": "keyword.operator.blang",
+          "match": "(?:->|=>|::|==|!=|<=|>=|&&|\\|\\||\\+\\+|--|<<|>>|\\\\)"
+        },
+        {
+          "name": "keyword.operator.blang",
+          "match": "[+\\-*/%<>=@.,;:!~&|^$?]"
+        }
+      ]
+    }
+  }
+}

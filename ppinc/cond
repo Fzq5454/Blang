@@ -1,0 +1,9 @@
+!~
+ ~  ppinc/cond: a header found through a -P<dir> directory.
+ ~
+ ~  It is not in includes/bl, so the only way it can be reached is
+ ~  `blang.exe ... -Pppinc`, which is what puts `#head "cond"` here.
+ ~!
+int from_p_dir {
+    return 77;
+}

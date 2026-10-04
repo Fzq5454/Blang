@@ -1,0 +1,77 @@
+!~
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ ~  achive file (math)
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~!
+
+#once
+
+BLANG_API float pow -> float x, float y {
+	__badd(x);
+    __badd(y);
+	__bcall("_pow");
+	__bfree();
+}
+
+BLANG_API float sqrt -> float x {
+	__badd(x);
+	__bcall("_sqrt");
+	__bfree();
+}
+
+BLANG_API float cbrt -> float x {
+	__badd(x);
+	__bcall("_cbrt");
+	__bfree();
+}
+
+BLANG_API float amrt -> float x, float y {
+	__badd(x);
+    __badd(y);
+	__bcall("_amrt");
+	__bfree();
+}
+
+BLANG_API int ceil -> float x {
+	__badd(x);
+	__bcall("_ceil");
+	__bfree();
+}
+
+BLANG_API int floor -> float x {
+	__badd(x);
+	__bcall("_floor");
+	__bfree();
+}
+
+BLANG_API int round -> float x {
+	__badd(x);
+	__bcall("_round");
+	__bfree();
+}
+
+BLANG_API float abs -> float x {
+	__badd(x);
+	__bcall("_abs");
+	__bfree();
+}
+
+BLANG_API float mod -> float x, float y {
+	__badd(x);
+    __badd(y);
+	__bcall("_mod");
+	__bfree();
+}
+
+BLANG_API int num -> float x {
+	__badd(x);
+	__bcall("_num");
+	__bfree();
+}
+
+BLANG_API float prec -> float x, int y {
+	__badd(x);
+    __badd(y);
+	__bcall("_prec");
+	__bfree();
+}

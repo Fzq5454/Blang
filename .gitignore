@@ -1,0 +1,27 @@
+# ---- build output ----
+# Nothing here is committed: the compiler in bootstrap\bin, the runtime DLLs, the
+# signatures they are built from and the intermediate code are all produced by
+# build.ps1 from the .b sources.
+bin/
+stage2/
+obj/
+bootstrap/bin/
+bootstrap/meta/
+meta/
+tests/out/
+*.exe
+*.dll
+*.dll.a
+*.lib
+# the import libraries a program links with -l are part of the sources
+!lib/*.lib
+*.r
+*.i
+*.o
+*.obj
+*.bst
+*.bmeta
+a.out*
+
+# ---- editor ----
+.vscode/

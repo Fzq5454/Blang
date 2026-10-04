@@ -1,0 +1,52 @@
+!~
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ ~  fileio (file input/output)
+ ~  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~!
+
+#once
+
+BLANG_API @void getFile -> str path, str mode {
+	__badd(path);
+	__badd(mode);
+	__bcall("_getFile");
+	__bfree();
+}
+
+BLANG_API str readFile -> @void f, int rows, int cols {
+	__badd(f);
+	__badd(rows);
+	__badd(cols);
+	__bcall("_readFile");
+	__bfree();
+}
+
+BLANG_API str readFileA -> @void f, int rows, int cols {
+	__badd(f);
+	__badd(rows);
+	__badd(cols);
+	__bcall("_readFileA");
+	__bfree();
+}
+
+BLANG_API char readFileChar -> @void f, int row, int col {
+	__badd(f);
+	__badd(row);
+	__badd(col);
+	__bcall("_readFileChar");
+	__bfree();
+}
+
+BLANG_API void writeFile -> @void f, str content {
+	__badd(f);
+	__badd(content);
+	__bcall("_writeFile");
+	__bfree();
+}
+
+BLANG_API void writeFileByte -> @void f, int data {
+	__badd(f);
+	__badd(data);
+	__bcall("_writeFileByte");
+	__bfree();
+}
