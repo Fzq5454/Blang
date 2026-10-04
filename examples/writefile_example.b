@@ -1,6 +1,8 @@
 !~
  ~  writefile_example.b: write values to the console with WriteFile.
  ~
+ ~  Build: blang.exe examples/writefile_example.b -system kernel32 -o writefile.exe
+ ~
  ~  `system.out` is the usual way to print; this is the same thing by hand, and
  ~  it is what a program does when it wants to decide the exact bytes that leave
  ~  it. A value becomes text with `(str)`, and that text goes to the kernel

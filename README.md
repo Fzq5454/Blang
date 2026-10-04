@@ -117,9 +117,12 @@ Linking and placement are chosen with `-link <dll>` (a b DLL), `-system <dll>`
 `#head`, `#import` and `#to` — `#to type=dll` builds a DLL instead of an
 executable.
 
-The repository root holds small demo programs to try: `hello.b`, `test.b` (a struct
-with an out-of-line method), `operator_example.b`, `long_example.b`, `pkg.b`
-(packages), `win.b` (a window program) and others.
+`examples/` holds small programs to try: `struct_method.b` (a struct with an
+out-of-line method), `operator_example.b`, `long_example.b`, `pkg.b` (packages),
+`win.b` and `msg.b` (window programs), and others. Two of them name no system DLL
+of their own, so they are built with the DLLs they call: `msg.b` with
+`-system kernel32 -system user32 -system gdi32`, `writefile_example.b` with
+`-system kernel32`.
 
 ## Repository layout
 
@@ -134,6 +137,7 @@ with an out-of-line method), `operator_example.b`, `long_example.b`, `pkg.b`
 | `native/` | one signature file per Windows system DLL (`stub` declarations, no code) |
 | `lib/` | the import libraries a program links with `-l<name>` (`brtm`, `bprintf`, `bfile`, `bmath`, `bwin`) |
 | `ppinc/` | preprocessor include fragments |
+| `examples/` | small b programs: language features, packages, windows |
 | `source_code/self/` | a byte-for-byte reading copy of the compiler's sources; see `source_code/README.md` |
 | `tests/` | the PowerShell test suites |
 | `vsex/blang/` | the VS Code extension for `.b` files (sources; pack it with `vsce package`) |

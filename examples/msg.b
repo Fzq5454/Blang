@@ -1,10 +1,12 @@
 !~
- ~  msg.b: the information window of test.c, in blang.
+ ~  msg.b: a window that paints centred text, built on user32 and gdi32.
  ~
- ~  The C version registers a window class of its own, paints centred text in it
- ~  with a bold face, closes when it is clicked or when Esc/Enter is pressed, and
- ~  ends with its message loop. This is the same program, with the same window
- ~  class name, title, size, font and colours.
+ ~  Build: blang.exe examples/msg.b -system kernel32 -system user32 -system gdi32 -o msg.exe
+ ~
+ ~  It registers a window class of its own, paints centred text in it with a bold
+ ~  face, closes when it is clicked or when Esc/Enter is pressed, and ends with its
+ ~  message loop. The window class name, title, size, font and colours are written
+ ~  out here.
  ~
  ~  Every handle a Windows call hands back or takes (HWND, HDC, HFONT, HBRUSH,
  ~  HCURSOR, HINSTANCE, HMENU) is a @void: a handle is an opaque word, and the
@@ -92,7 +94,7 @@ type Wide {
 
 !!! The window procedure. What it draws comes from its own locals, and it reads no
 !!! global: a callback user32 calls has user32's own r15, so the first global the
-!!! callback touches would fault. That is why the C version's `L"..."` literals are
+!!! callback touches would fault. That is why wide `L"..."` literals are
 !!! built here, into stack buffers, on every paint.
 longlong msg_wnd_proc -> @void hwnd, int msg, longlong wparam, longlong lparam {
     if msg == 15 {
